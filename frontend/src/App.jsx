@@ -6,7 +6,7 @@ import {
   Briefcase, User, Search, Bell, ChevronRight, Zap,
   AlertCircle, ShieldCheck, Globe, Cpu, MousePointer2, 
   ArrowRight, Star, Target, Rocket, Layers, BarChart3,
-  ExternalLink, Github, Twitter, Linkedin as LinkedinIcon,
+  ExternalLink, Code as Github, Send as Twitter, Users as LinkedinIcon,
   Check, X
 } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
