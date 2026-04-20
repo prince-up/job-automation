@@ -1,33 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Upload, Link as LinkIcon, FileText, CheckCircle, Download, Loader2, Sparkles } from 'lucide-react';
+import { 
+  Upload, Link as LinkIcon, FileText, CheckCircle, Download, 
+  Loader2, Sparkles, LayoutDashboard, History, Settings, 
+  Briefcase, User, Search, Bell, ChevronRight, Zap,
+  AlertCircle, ShieldCheck, Globe, Cpu
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const API_BASE = 'http://localhost:8000';
+
 function App() {
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [file, setFile] = useState(null);
   const [jobUrl, setJobUrl] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
-
-  const handleFileUpload = (e) => {
-    const selectedFile = e.target.files[0];
-    if (selectedFile && selectedFile.type === 'application/pdf') {
-      setFile(selectedFile);
-      setError('');
-    } else {
-      setError('Please upload a valid PDF resume.');
-    }
-  };
-
   const [history, setHistory] = useState([
-    { id: 1, job: 'Senior DevOps Engineer', company: 'Google', date: '2024-04-18', score: 92 },
-    { id: 2, job: 'SRE Lead', company: 'Meta', date: '2024-04-15', score: 78 },
+    { id: 1, job: 'Senior DevOps Engineer', company: 'Google', date: '2024-04-18', score: 92, status: 'Tailored' },
+    { id: 2, job: 'SRE Lead', company: 'Meta', date: '2024-04-15', score: 78, status: 'Draft' },
+    { id: 3, job: 'Cloud Architect', company: 'Amazon', date: '2024-04-10', score: 85, status: 'Applied' },
   ]);
+
+  // AI Configuration (Local Storage)
+  const [config, setConfig] = useState({
+    openaiKey: localStorage.getItem('openai_key') || '',
+    apifyToken: localStorage.getItem('apify_token') || ''
+  });
+
+  useEffect(() => {
+    localStorage.setItem('openai_key', config.openaiKey);
+    localStorage.setItem('apify_token', config.apifyToken);
+  }, [config]);
 
   const handleDownload = async (content, filename) => {
     try {
-      const response = await axios.post('http://localhost:8000/generate-pdf', { content }, { responseType: 'blob' });
+      const response = await axios.post(`${API_BASE}/generate-pdf`, { content }, { responseType: 'blob' });
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -51,23 +60,24 @@ function App() {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      const uploadRes = await axios.post('http://localhost:8000/upload-resume', formData);
+      const uploadRes = await axios.post(`${API_BASE}/upload-resume`, formData);
       const resumeText = uploadRes.data.resume_text;
 
-      const processRes = await axios.post('http://localhost:8000/process-job', {
+      const processRes = await axios.post(`${API_BASE}/process-job`, {
         url: jobUrl,
         resume_text: resumeText
       });
 
       setResult(processRes.data);
-      // Add to history
       setHistory([{ 
         id: Date.now(), 
-        job: 'New Application', 
-        company: new URL(jobUrl).hostname, 
+        job: 'DevOps Specialist', 
+        company: new URL(jobUrl).hostname.split('.')[1] || 'Company', 
         date: new Date().toISOString().split('T')[0], 
-        score: processRes.data.match_score 
+        score: processRes.data.match_score,
+        status: 'Tailored'
       }, ...history]);
+      setActiveTab('results');
     } catch (err) {
       setError(err.response?.data?.detail || 'Something went wrong during processing.');
     } finally {
@@ -76,212 +86,302 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen p-4 md:p-8">
-      {/* Header */}
-      <header className="max-w-7xl mx-auto mb-12 flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <div className="p-2 bg-indigo-600 rounded-lg shadow-lg shadow-indigo-500/20">
-            <Sparkles className="text-white" size={24} />
+    <div className="flex h-screen bg-[#020617] text-white">
+      {/* Sidebar */}
+      <aside className="w-72 bg-[#0f172a]/50 border-r border-white/5 p-6 flex flex-col hidden lg:flex">
+        <div className="flex items-center gap-3 mb-10 px-2">
+          <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
+            <Sparkles size={20} />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold gradient-text tracking-tight">JobAI Agent</h1>
-            <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Pro Edition</p>
-          </div>
+          <span className="text-xl font-bold tracking-tight">JobAI <span className="text-indigo-400">Agent</span></span>
         </div>
-        <nav className="hidden md:flex gap-8 text-sm font-semibold text-slate-400">
-          <a href="#" className="hover:text-white transition-colors relative group">
-            Dashboard
-            <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-indigo-500 scale-x-0 group-hover:scale-x-100 transition-transform"></span>
-          </a>
-          <a href="#" className="hover:text-white transition-colors">Applications</a>
-          <a href="#" className="hover:text-white transition-colors">Career Path</a>
-          <div className="h-5 w-px bg-slate-800"></div>
-          <button className="text-indigo-400 hover:text-indigo-300 transition-colors">Upgrade to Pro</button>
+
+        <nav className="space-y-2 flex-1">
+          <SidebarItem icon={<LayoutDashboard size={20} />} label="Dashboard" active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
+          <SidebarItem icon={<History size={20} />} label="Applications" active={activeTab === 'applications'} onClick={() => setActiveTab('applications')} />
+          <SidebarItem icon={<Briefcase size={20} />} label="Resume Hub" active={activeTab === 'resume-hub'} onClick={() => setActiveTab('resume-hub')} />
+          <SidebarItem icon={<Settings size={20} />} label="AI Config" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
         </nav>
-      </header>
 
-      <main className="max-w-7xl mx-auto grid grid-cols-1 xl:grid-cols-12 gap-8">
-        {/* Left: Input & History */}
-        <div className="xl:col-span-4 space-y-8">
-          <section className="glass-morphism p-8 space-y-6">
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-indigo-500/10 flex items-center justify-center">
-                <FileText className="text-indigo-400" size={18} />
-              </div>
-              Optimize Resume
-            </h2>
-
-            {/* Resume Upload */}
-            <div className="space-y-3">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Source Resume</label>
-              <div 
-                className={`border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center transition-all duration-300
-                  ${file ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-slate-800 hover:border-indigo-500/30 hover:bg-indigo-500/5'}`}
-                onClick={() => document.getElementById('resume-input').click()}
-              >
-                <input type="file" id="resume-input" className="hidden" accept=".pdf" onChange={(e) => {
-                  const selectedFile = e.target.files[0];
-                  if (selectedFile) setFile(selectedFile);
-                }} />
-                {file ? (
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                      <CheckCircle className="text-emerald-500" size={24} />
-                    </div>
-                    <span className="text-emerald-400 text-sm font-medium">{file.name}</span>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center gap-3 text-slate-500">
-                    <Upload size={32} strokeWidth={1.5} />
-                    <span className="text-sm font-medium">Click to upload PDF resume</span>
-                  </div>
-                )}
-              </div>
+        <div className="mt-auto glass-morphism p-4 border border-indigo-500/10">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500" />
+            <div>
+              <p className="text-xs font-bold">Lucky Singh</p>
+              <p className="text-[10px] text-slate-500 uppercase">Premium Member</p>
             </div>
-
-            {/* Job URL */}
-            <div className="space-y-3">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Job Listing URL</label>
-              <div className="relative">
-                <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-                <input 
-                  type="text" 
-                  placeholder="Paste LinkedIn or Indeed URL..." 
-                  className="input-field pl-12 h-14"
-                  value={jobUrl}
-                  onChange={(e) => setJobUrl(e.target.value)}
-                />
-              </div>
-            </div>
-
-            {error && <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-400 text-xs rounded-xl">{error}</div>}
-
-            <button 
-              className="btn-primary w-full h-14 justify-center shadow-xl shadow-indigo-600/20"
-              onClick={handleProcess}
-              disabled={isProcessing}
-            >
-              {isProcessing ? <Loader2 className="animate-spin" size={20} /> : <><Sparkles size={20} /> Generate Tailored Version</>}
-            </button>
-          </section>
-
-          {/* History */}
-          <section className="glass-morphism p-6 overflow-hidden">
-            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6 px-2">Recent Applications</h3>
-            <div className="space-y-2">
-              {history.map(item => (
-                <div key={item.id} className="p-4 rounded-xl hover:bg-white/5 transition-colors border border-transparent hover:border-white/5 group">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h4 className="text-sm font-semibold text-slate-200 group-hover:text-indigo-400 transition-colors">{item.job}</h4>
-                      <p className="text-xs text-slate-500 mt-1">{item.company} • {item.date}</p>
-                    </div>
-                    <span className={`text-xs font-bold px-2 py-1 rounded-md ${item.score > 80 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>
-                      {item.score}%
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
+          </div>
+          <button className="w-full py-2 bg-white/5 hover:bg-white/10 rounded-lg text-xs font-bold transition-colors">Sign Out</button>
         </div>
+      </aside>
 
-        {/* Right: Results */}
-        <div className="xl:col-span-8">
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col overflow-hidden relative">
+        {/* Top bar */}
+        <header className="h-20 border-b border-white/5 px-8 flex items-center justify-between bg-[#020617]/50 backdrop-blur-md z-10">
+          <div className="flex items-center gap-4 bg-white/5 px-4 py-2 rounded-xl border border-white/5 w-96">
+            <Search size={18} className="text-slate-500" />
+            <input type="text" placeholder="Search applications..." className="bg-transparent border-none outline-none text-sm w-full" />
+          </div>
+          <div className="flex items-center gap-6">
+            <div className="relative">
+              <Bell size={20} className="text-slate-400 cursor-pointer hover:text-white" />
+              <span className="absolute -top-1 -right-1 w-2 h-2 bg-indigo-500 rounded-full border-2 border-[#020617]"></span>
+            </div>
+            <button className="btn-premium py-2 px-5 text-sm">New Application</button>
+          </div>
+        </header>
+
+        {/* Content Area */}
+        <div className="flex-1 overflow-y-auto p-8 relative">
+          {/* Background Decor */}
+          <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-indigo-600/5 blur-[120px] pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-purple-600/5 blur-[120px] pointer-events-none" />
+
           <AnimatePresence mode="wait">
-            {!result ? (
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="glass-morphism h-full min-h-[600px] flex flex-col items-center justify-center p-12 text-center"
-              >
-                <div className="relative mb-8">
-                  <div className="absolute inset-0 bg-indigo-500 blur-3xl opacity-10 animate-pulse"></div>
-                  <div className="w-24 h-24 bg-slate-900 border border-slate-800 rounded-3xl flex items-center justify-center relative">
-                    <FileText className="text-slate-700" size={48} strokeWidth={1} />
+            {activeTab === 'dashboard' && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-10">
+                <div className="flex justify-between items-end">
+                  <div>
+                    <h2 className="text-3xl font-bold tracking-tight">Welcome back, Lucky 👋</h2>
+                    <p className="text-slate-500 mt-1">You have 3 applications in progress this week.</p>
                   </div>
-                </div>
-                <h3 className="text-2xl font-bold text-slate-300">Intelligent Analysis Ready</h3>
-                <p className="text-slate-500 mt-3 max-w-md mx-auto">Upload your resume and a job link to see the magic happen. We'll optimize your profile for ATS algorithms.</p>
-              </motion.div>
-            ) : (
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-8"
-              >
-                {/* Score & Insights */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="glass-morphism p-8 md:col-span-1 flex flex-col items-center justify-center text-center">
-                    <div className="relative w-32 h-32 mb-4">
-                      <svg className="w-full h-full transform -rotate-90">
-                        <circle cx="64" cy="64" r="58" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-slate-800" />
-                        <circle cx="64" cy="64" r="58" stroke="currentColor" strokeWidth="8" fill="transparent" strokeDasharray={364} strokeDashoffset={364 - (364 * result.match_score) / 100} className="text-indigo-500" />
-                      </svg>
-                      <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-3xl font-black text-white">{result.match_score}%</span>
-                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">Match</span>
-                      </div>
-                    </div>
-                    <h4 className="text-sm font-bold text-slate-300">Strong Candidate</h4>
-                  </div>
-
-                  <div className="glass-morphism p-8 md:col-span-2">
-                    <h3 className="font-bold text-slate-300 mb-4 flex items-center gap-2">
-                      <Sparkles className="text-amber-400" size={18} />
-                      AI Insights
-                    </h3>
-                    <div className="space-y-3">
-                      <div className="flex gap-3">
-                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5"></div>
-                        <p className="text-sm text-slate-400"><span className="text-slate-200 font-medium">Keywords Found:</span> Kubernetes, CI/CD, Terraform, AWS.</p>
-                      </div>
-                      <div className="flex gap-3">
-                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1.5"></div>
-                        <p className="text-sm text-slate-400"><span className="text-slate-200 font-medium">Tip:</span> Highlight your Helm chart experience to increase score.</p>
-                      </div>
-                    </div>
+                  <div className="flex gap-3">
+                    <StatCard label="Match Rate" value="84%" trend="+5%" />
+                    <StatCard label="Optimization" value="Pro" trend="Active" />
                   </div>
                 </div>
 
-                {/* Main Content Tabs */}
-                <div className="glass-morphism overflow-hidden">
-                  <div className="flex border-b border-white/5">
-                    <button className="px-8 py-5 text-sm font-bold border-b-2 border-indigo-500 text-white">Cover Letter</button>
-                    <button className="px-8 py-5 text-sm font-bold text-slate-500 hover:text-slate-300 transition-colors">Optimized Summary</button>
-                  </div>
-                  
-                  <div className="p-8 space-y-6">
-                    <div className="flex justify-between items-center">
-                      <h3 className="font-bold text-slate-300">Generated Cover Letter</h3>
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                  {/* Action Card */}
+                  <div className="xl:col-span-2 glass-morphism p-10 space-y-8 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-12 bg-indigo-500/10 rounded-full blur-3xl group-hover:bg-indigo-500/20 transition-all duration-700" />
+                    
+                    <div className="relative">
+                      <h3 className="text-xl font-bold flex items-center gap-3 mb-8">
+                        <Zap className="text-indigo-400" /> Start New Optimization
+                      </h3>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-4">
+                          <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">1. Master Resume</label>
+                          <div 
+                            className={`border-2 border-dashed rounded-3xl p-10 flex flex-col items-center justify-center transition-all cursor-pointer h-52
+                              ${file ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-white/5 hover:border-indigo-500/40 hover:bg-white/5'}`}
+                            onClick={() => document.getElementById('resume-input').click()}
+                          >
+                            <input type="file" id="resume-input" className="hidden" accept=".pdf" onChange={(e) => setFile(e.target.files[0])} />
+                            {file ? (
+                              <div className="text-center">
+                                <ShieldCheck className="text-emerald-500 mx-auto mb-4" size={40} />
+                                <p className="text-sm font-bold text-emerald-400">{file.name}</p>
+                              </div>
+                            ) : (
+                              <>
+                                <Upload className="text-slate-600 mb-4" size={40} strokeWidth={1} />
+                                <p className="text-sm text-slate-400 text-center font-medium">Drop your master PDF here</p>
+                              </>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="space-y-4">
+                          <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">2. Target Job URL</label>
+                          <div className="h-52 flex flex-col justify-between">
+                            <div className="relative">
+                              <Globe className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={18} />
+                              <input 
+                                type="text" 
+                                placeholder="LinkedIn, Indeed, or Apify URL" 
+                                className="input-premium pl-12 h-14"
+                                value={jobUrl}
+                                onChange={(e) => setJobUrl(e.target.value)}
+                              />
+                            </div>
+                            <div className="bg-indigo-500/5 border border-indigo-500/10 p-5 rounded-2xl">
+                              <p className="text-[10px] leading-relaxed text-slate-400">
+                                <span className="text-indigo-400 font-bold">Pro Tip:</span> Using Apify's RAG Web Browser will increase accuracy by 45%.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {error && <div className="mt-6 p-4 bg-red-500/10 border border-red-500/20 text-red-400 text-xs rounded-xl flex items-center gap-3"><AlertCircle size={16} /> {error}</div>}
+
                       <button 
-                        className="text-xs font-bold text-indigo-400 hover:text-indigo-300 flex items-center gap-2 bg-indigo-500/10 px-4 py-2 rounded-lg transition-colors"
-                        onClick={() => handleDownload(result.cover_letter, 'Cover_Letter.pdf')}
+                        className="btn-premium w-full mt-10 h-16 text-lg justify-center shadow-2xl shadow-indigo-600/30"
+                        onClick={handleProcess}
+                        disabled={isProcessing}
                       >
-                        <Download size={14} /> Download PDF
+                        {isProcessing ? (
+                          <><Loader2 className="animate-spin" size={24} /> Analyzing Requirements...</>
+                        ) : (
+                          <><Sparkles size={24} /> Tailor My Application</>
+                        )}
                       </button>
                     </div>
-                    <div className="bg-slate-950/50 rounded-2xl p-8 text-sm text-slate-400 leading-relaxed font-serif border border-white/5 whitespace-pre-wrap">
-                      {result.cover_letter}
+                  </div>
+
+                  {/* Secondary Card */}
+                  <div className="xl:col-span-1 space-y-8">
+                    <div className="glass-morphism p-8 h-full flex flex-col">
+                      <h3 className="text-lg font-bold mb-6">Application Trends</h3>
+                      <div className="flex-1 flex flex-col gap-4">
+                        <TrendItem label="DevOps Roles" value="+12%" color="text-emerald-500" />
+                        <TrendItem label="Avg Match Score" value="78%" color="text-indigo-400" />
+                        <TrendItem label="Hiring Velocity" value="Fast" color="text-amber-500" />
+                        <div className="mt-auto p-4 bg-white/5 rounded-2xl text-center">
+                          <p className="text-xs text-slate-500 mb-3">AI Resume Power Level</p>
+                          <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
+                            <div className="h-full bg-indigo-500 w-3/4 rounded-full" />
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Resume Highlights */}
-                <div className="glass-morphism p-8 space-y-6">
-                  <div className="flex justify-between items-center">
-                    <h3 className="font-bold text-slate-300">Optimized Resume Summary</h3>
-                    <button 
-                      className="text-xs font-bold text-indigo-400 hover:text-indigo-300 flex items-center gap-2 bg-indigo-500/10 px-4 py-2 rounded-lg transition-colors"
-                      onClick={() => handleDownload(result.optimized_resume, 'Resume_Summary.pdf')}
-                    >
-                      <Download size={14} /> Export Summary
-                    </button>
+                {/* Bottom Section */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  <div className="glass-morphism p-8">
+                    <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
+                      <History size={18} className="text-slate-400" /> Recent Activity
+                    </h3>
+                    <div className="space-y-4">
+                      {history.slice(0, 3).map(item => (
+                        <div key={item.id} className="flex items-center justify-between p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors cursor-pointer group">
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400 group-hover:bg-indigo-500 group-hover:text-white transition-all">
+                              <Briefcase size={18} />
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold">{item.job}</p>
+                              <p className="text-[10px] text-slate-500 font-bold uppercase">{item.company} • {item.date}</p>
+                            </div>
+                          </div>
+                          <ChevronRight size={16} className="text-slate-600 group-hover:text-white" />
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="p-6 bg-indigo-500/5 border border-indigo-500/10 rounded-2xl">
-                    <p className="text-sm text-slate-300 italic leading-relaxed">
-                      "{result.optimized_resume}"
-                    </p>
+
+                  <div className="glass-morphism p-8 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-8">
+                      <Cpu size={80} className="text-white/5" />
+                    </div>
+                    <h3 className="text-lg font-bold mb-6">AI Engine Status</h3>
+                    <div className="space-y-6">
+                      <StatusRow label="GPT-4 Integration" status="Operational" />
+                      <StatusRow label="Apify RAG Scraper" status="Operational" />
+                      <StatusRow label="Resume Parser" status="Latency: 1.2s" />
+                      <button className="w-full mt-4 py-3 border border-white/10 rounded-xl text-xs font-bold hover:bg-white/5 transition-colors">Run Diagnostics</button>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'results' && result && (
+              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
+                <div className="flex justify-between items-center">
+                  <button onClick={() => setActiveTab('dashboard')} className="text-sm text-slate-500 hover:text-white flex items-center gap-2">
+                    <ChevronRight size={16} className="rotate-180" /> Back to Dashboard
+                  </button>
+                  <div className="flex gap-3">
+                    <button onClick={() => handleDownload(result.optimized_resume, 'Optimized_Resume.pdf')} className="btn-premium bg-emerald-600 shadow-emerald-900/20 py-2">Export Resume</button>
+                    <button onClick={() => handleDownload(result.cover_letter, 'Cover_Letter.pdf')} className="btn-premium py-2">Export Letter</button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                  {/* Left: Score Card */}
+                  <div className="lg:col-span-4 space-y-8">
+                    <div className="glass-morphism p-10 flex flex-col items-center text-center">
+                      <div className="relative w-48 h-48 mb-8">
+                        <svg className="w-full h-full transform -rotate-90">
+                          <circle cx="96" cy="96" r="88" stroke="currentColor" strokeWidth="12" fill="transparent" className="text-slate-900" />
+                          <circle cx="96" cy="96" r="88" stroke="currentColor" strokeWidth="12" fill="transparent" strokeDasharray={552} strokeDashoffset={552 - (552 * result.match_score) / 100} className="text-indigo-500" strokeLinecap="round" />
+                        </svg>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                          <span className="text-6xl font-black">{result.match_score}%</span>
+                          <span className="text-xs text-slate-500 font-bold uppercase tracking-widest">Match Score</span>
+                        </div>
+                      </div>
+                      <h3 className="text-2xl font-bold mb-2">High Potential</h3>
+                      <p className="text-slate-500 text-sm leading-relaxed">Your profile aligns significantly with the core requirements. A few tweaks to your cloud infrastructure bullet points could bring this to 95%+.</p>
+                    </div>
+
+                    <div className="glass-morphism p-8">
+                      <h4 className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-6">Optimization Checklist</h4>
+                      <div className="space-y-4">
+                        <ChecklistItem label="Keyword Alignment" checked={true} />
+                        <ChecklistItem label="Formatting Consistency" checked={true} />
+                        <ChecklistItem label="Achievement Quantifiers" checked={true} />
+                        <ChecklistItem label="Skill Gap identified" checked={false} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right: Content Cards */}
+                  <div className="lg:col-span-8 space-y-8">
+                    <div className="glass-morphism overflow-hidden">
+                      <div className="flex border-b border-white/5">
+                        <button className="px-10 py-6 text-sm font-bold border-b-2 border-indigo-500">Cover Letter</button>
+                        <button className="px-10 py-6 text-sm font-bold text-slate-500 hover:text-white">Profile Summary</button>
+                      </div>
+                      <div className="p-10">
+                        <div className="bg-slate-950/40 rounded-3xl p-10 border border-white/5 text-slate-300 leading-relaxed font-serif text-lg italic whitespace-pre-wrap">
+                          {result.cover_letter}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="glass-morphism p-10">
+                      <h3 className="text-xl font-bold mb-6">AI Optimization Recommendations</h3>
+                      <div className="p-6 bg-indigo-500/5 border border-indigo-500/10 rounded-2xl">
+                        <p className="text-slate-300 leading-relaxed italic">"{result.optimized_resume}"</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'settings' && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="max-w-2xl mx-auto space-y-8">
+                <div>
+                  <h2 className="text-3xl font-bold">AI Configuration</h2>
+                  <p className="text-slate-500 mt-2">Manage your API keys and model preferences. These are stored securely in your browser's local storage.</p>
+                </div>
+
+                <div className="glass-morphism p-10 space-y-8">
+                  <div className="space-y-3">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">OpenAI API Key</label>
+                    <input 
+                      type="password" 
+                      placeholder="sk-..." 
+                      className="input-premium"
+                      value={config.openaiKey}
+                      onChange={(e) => setConfig({...config, openaiKey: e.target.value})}
+                    />
+                    <p className="text-[10px] text-slate-600">Required for resume optimization and cover letter generation.</p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Apify API Token</label>
+                    <input 
+                      type="password" 
+                      placeholder="apify_api_..." 
+                      className="input-premium"
+                      value={config.apifyToken}
+                      onChange={(e) => setConfig({...config, apifyToken: e.target.value})}
+                    />
+                    <p className="text-[10px] text-slate-600">Required for advanced web scraping and job requirement analysis.</p>
+                  </div>
+
+                  <div className="pt-6 border-t border-white/5 flex justify-end">
+                    <button className="btn-premium" onClick={() => setActiveTab('dashboard')}>Save & Finish Setup</button>
                   </div>
                 </div>
               </motion.div>
@@ -289,10 +389,63 @@ function App() {
           </AnimatePresence>
         </div>
       </main>
+    </div>
+  );
+}
 
-      <footer className="max-w-6xl mx-auto mt-20 py-8 border-t border-slate-800 text-center text-slate-500 text-sm">
-        <p>&copy; 2026 JobAI Agent - Powered by OpenAI</p>
-      </footer>
+// Subcomponents
+function SidebarItem({ icon, label, active, onClick }) {
+  return (
+    <div 
+      className={`sidebar-item ${active ? 'active' : ''}`}
+      onClick={onClick}
+    >
+      {icon}
+      <span>{label}</span>
+    </div>
+  );
+}
+
+function StatCard({ label, value, trend }) {
+  return (
+    <div className="bg-white/5 border border-white/5 rounded-2xl p-4 flex flex-col justify-center min-w-[140px]">
+      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{label}</p>
+      <div className="flex items-baseline gap-2 mt-1">
+        <span className="text-xl font-bold">{value}</span>
+        <span className="text-[10px] text-emerald-400 font-bold">{trend}</span>
+      </div>
+    </div>
+  );
+}
+
+function TrendItem({ label, value, color }) {
+  return (
+    <div className="flex items-center justify-between p-2">
+      <span className="text-sm text-slate-400">{label}</span>
+      <span className={`text-sm font-bold ${color}`}>{value}</span>
+    </div>
+  );
+}
+
+function StatusRow({ label, status }) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-xs text-slate-400">{label}</span>
+      <div className="flex items-center gap-2">
+        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
+        <span className="text-[10px] font-bold uppercase text-slate-500">{status}</span>
+      </div>
+    </div>
+  );
+}
+
+function ChecklistItem({ label, checked }) {
+  return (
+    <div className="flex items-center gap-3">
+      <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${checked ? 'bg-indigo-500 border-indigo-500' : 'border-white/10 bg-white/5'}`}>
+        {checked && <CheckCircle size={12} className="text-white" />}
+      </div>
+      <span className={`text-sm ${checked ? 'text-slate-300' : 'text-slate-600'}`}>{label}</span>
     </div>
   );
 }
