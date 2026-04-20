@@ -8,7 +8,7 @@ import {
   AlertCircle, ShieldCheck, Globe, Cpu, MousePointer2, 
   ArrowRight, Star, Target, Rocket, Layers, BarChart3,
   ExternalLink, Code, Send, Users, Video,
-  Check, X
+  Check, X, Play
 } from 'lucide-react';
 
 // Use aliases for brand icons that don't exist in Lucide
@@ -16,6 +16,91 @@ const Github = Code;
 const Twitter = Send;
 const LinkedinIcon = Users;
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
+
+// Helper Components
+function NavLink({ label }) {
+  return (
+    <a href="#" className="nav-link px-3 py-2 text-sm font-medium">
+      {label}
+    </a>
+  );
+}
+
+function SidebarItem({ icon, label, active, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all ${
+        active
+          ? 'bg-primary/10 text-primary border border-primary/20'
+          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+      }`}
+    >
+      <div className={active ? 'text-primary' : 'text-gray-500'}>
+        {icon}
+      </div>
+      <span className="font-medium">{label}</span>
+    </button>
+  );
+}
+
+function HeaderIcon({ icon, hasBadge }) {
+  return (
+    <button className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
+      {icon}
+      {hasBadge && (
+        <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+      )}
+    </button>
+  );
+}
+
+function StatCardPro({ label, value, trend, icon }) {
+  return (
+    <div className="flex items-center gap-3">
+      <div className="p-2 bg-primary/10 rounded-lg">
+        <div className="text-primary">{icon}</div>
+      </div>
+      <div>
+        <div className="text-sm font-semibold text-gray-900">{value}</div>
+        <div className="text-xs text-gray-500">{label}</div>
+      </div>
+    </div>
+  );
+}
+
+function AnalyticsRow({ label, value, color }) {
+  return (
+    <div className="flex justify-between items-center">
+      <span className="text-sm text-gray-600">{label}</span>
+      <span className={`text-sm font-semibold ${color}`}>{value}</span>
+    </div>
+  );
+}
+
+function StatusModule({ label, status, delay }) {
+  return (
+    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+      <span className="text-sm text-gray-600">{label}</span>
+      <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+        status === 'Optimal' ? 'bg-green-100 text-green-700' :
+        status === 'Scaling' ? 'bg-blue-100 text-blue-700' :
+        'bg-gray-100 text-gray-700'
+      }`}>
+        {status}
+      </span>
+    </div>
+  );
+}
+
+function MetricBadge({ label, value }) {
+  return (
+    <div className="text-center">
+      <div className="text-lg font-bold text-primary">{value}</div>
+      <div className="text-xs text-gray-500 uppercase tracking-wide">{label}</div>
+    </div>
+  );
+}
 
 const API_BASE = 'http://localhost:8001';
 
@@ -163,41 +248,381 @@ function App() {
   }
 
   return (
-    <div className="flex h-screen bg-dark text-white font-sans overflow-hidden">
-      {/* Sidebar - Pro Version */}
-      <aside className="w-72 bg-sidebar/50 border-r border-white/5 p-6 flex flex-col hidden lg:flex relative z-30">
-        <div className="flex items-center gap-3 mb-10 px-2 cursor-pointer" onClick={() => setActiveTab('landing')}>
-          <div className="w-10 h-10 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/30">
-            <Rocket size={22} className="text-white" />
-          </div>
-          <span className="text-xl font-display font-extrabold tracking-tight">JobAI <span className="text-primary">Agent</span></span>
-        </div>
-
-        <nav className="space-y-2 flex-1">
-          <SidebarItem icon={<LayoutDashboard size={20} />} label="Dashboard" active={activeTab === 'dashboard' || activeTab === 'results'} onClick={() => setActiveTab('dashboard')} />
-          <SidebarItem icon={<History size={20} />} label="Applications" active={activeTab === 'applications'} onClick={() => setActiveTab('applications')} />
-          <SidebarItem icon={<Briefcase size={20} />} label="Resume Hub" active={activeTab === 'resume-hub'} onClick={() => setActiveTab('resume-hub')} />
-          <SidebarItem icon={<Settings size={20} />} label="AI Config" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
-        </nav>
-
-        <div className="mt-auto glass-panel p-5 border-white/10 rounded-3xl">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-primary to-secondary p-0.5 shadow-lg shadow-primary/20">
-              <div className="w-full h-full rounded-2xl bg-sidebar flex items-center justify-center font-bold text-sm">LS</div>
+    <div className="min-h-screen bg-gray-50 text-gray-900 font-sans">
+      {/* Professional Sidebar */}
+      <aside className="fixed left-0 top-0 h-full w-64 bg-white border-r border-gray-200 z-30">
+        <div className="flex flex-col h-full">
+          {/* Logo */}
+          <div className="flex items-center gap-3 p-6 border-b border-gray-200">
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+              <Rocket size={18} className="text-white" />
             </div>
-            <div>
-              <p className="text-sm font-bold">Lucky Singh</p>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
-                <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Pro Tier</p>
+            <span className="text-lg font-display font-bold">JobAI Pro</span>
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 p-4 space-y-2">
+            <SidebarItem icon={<LayoutDashboard size={20} />} label="Dashboard" active={activeTab === 'dashboard' || activeTab === 'results'} onClick={() => setActiveTab('dashboard')} />
+            <SidebarItem icon={<Search size={20} />} label="Job Search" active={activeTab === 'search'} onClick={() => setActiveTab('search')} />
+            <SidebarItem icon={<History size={20} />} label="Applications" active={activeTab === 'applications'} onClick={() => setActiveTab('applications')} />
+            <SidebarItem icon={<Video size={20} />} label="Interviews" active={activeTab === 'interviews'} onClick={() => setActiveTab('interviews')} />
+            <SidebarItem icon={<FileText size={20} />} label="Resume Hub" active={activeTab === 'resume-hub'} onClick={() => setActiveTab('resume-hub')} />
+            <SidebarItem icon={<BarChart3 size={20} />} label="Analytics" active={activeTab === 'analytics'} onClick={() => setActiveTab('analytics')} />
+            <SidebarItem icon={<Settings size={20} />} label="Settings" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
+          </nav>
+
+          {/* User Profile */}
+          <div className="p-4 border-t border-gray-200">
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                <span className="text-white font-semibold text-sm">LS</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-sm text-gray-900 truncate">Lucky Singh</div>
+                <div className="text-xs text-gray-500">Pro Plan</div>
               </div>
             </div>
           </div>
-          <button className="w-full py-3 bg-white/5 hover:bg-red-500/10 hover:text-red-400 rounded-xl text-[11px] font-bold transition-all border border-white/5 flex items-center justify-center gap-2">
-            Sign Out <ChevronRight size={14} />
-          </button>
         </div>
       </aside>
+
+      {/* Main Content */}
+      <main className="ml-64 min-h-screen">
+        {/* Header */}
+        <header className="bg-white border-b border-gray-200 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4 flex-1 max-w-md">
+              <div className="relative flex-1">
+                <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search jobs, companies, or skills..."
+                  className="input-field pl-10 w-full"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearchJobs()}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <HeaderIcon icon={<Bell size={18} />} hasBadge />
+              <HeaderIcon icon={<Users size={18} />} />
+              <HeaderIcon icon={<Settings size={18} />} />
+              <button className="btn-primary px-4 py-2 text-sm" onClick={handleSearchJobs}>
+                Search Jobs
+              </button>
+            </div>
+          </div>
+        </header>
+
+        {/* Content Area */}
+        <div className="p-6">
+          <AnimatePresence mode="wait">
+            {activeTab === 'dashboard' && (
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+                {/* Welcome Section */}
+                <div className="mb-8">
+                  <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome back, Lucky! 👋</h1>
+                  <p className="text-gray-600">Here's what's happening with your job search today.</p>
+                </div>
+
+                {/* Stats Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                  <div className="card p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Applications Sent</p>
+                        <p className="text-2xl font-bold text-gray-900">247</p>
+                      </div>
+                      <div className="p-3 bg-primary/10 rounded-lg">
+                        <FileText size={24} className="text-primary" />
+                      </div>
+                    </div>
+                    <div className="mt-4 flex items-center gap-2">
+                      <ArrowRight size={14} className="text-accent rotate-[-90deg]" />
+                      <span className="text-sm text-accent font-medium">+12 this week</span>
+                    </div>
+                  </div>
+
+                  <div className="card p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Interview Requests</p>
+                        <p className="text-2xl font-bold text-gray-900">12</p>
+                      </div>
+                      <div className="p-3 bg-secondary/10 rounded-lg">
+                        <Video size={24} className="text-secondary" />
+                      </div>
+                    </div>
+                    <div className="mt-4 flex items-center gap-2">
+                      <ArrowRight size={14} className="text-accent rotate-[-90deg]" />
+                      <span className="text-sm text-accent font-medium">+3 this week</span>
+                    </div>
+                  </div>
+
+                  <div className="card p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Response Rate</p>
+                        <p className="text-2xl font-bold text-gray-900">89%</p>
+                      </div>
+                      <div className="p-3 bg-accent/10 rounded-lg">
+                        <Target size={24} className="text-accent" />
+                      </div>
+                    </div>
+                    <div className="mt-4 flex items-center gap-2">
+                      <ArrowRight size={14} className="text-accent rotate-[-90deg]" />
+                      <span className="text-sm text-accent font-medium">+5% this month</span>
+                    </div>
+                  </div>
+
+                  <div className="card p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Profile Views</p>
+                        <p className="text-2xl font-bold text-gray-900">1,429</p>
+                      </div>
+                      <div className="p-3 bg-purple-100 rounded-lg">
+                        <Users size={24} className="text-purple-600" />
+                      </div>
+                    </div>
+                    <div className="mt-4 flex items-center gap-2">
+                      <ArrowRight size={14} className="text-accent rotate-[-90deg]" />
+                      <span className="text-sm text-accent font-medium">+127 this week</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Recent Applications */}
+                  <div className="lg:col-span-2">
+                    <div className="card p-6">
+                      <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-lg font-semibold text-gray-900">Recent Applications</h3>
+                        <button className="text-primary text-sm font-medium hover:text-primary/80">View all</button>
+                      </div>
+
+                      <div className="space-y-4">
+                        {history.slice(0, 5).map(item => (
+                          <div key={item.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                            <div className="flex items-center gap-4">
+                              <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                                <Briefcase size={18} className="text-primary" />
+                              </div>
+                              <div>
+                                <h4 className="font-medium text-gray-900">{item.job}</h4>
+                                <p className="text-sm text-gray-600">{item.company} • {item.date}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <div className="text-right">
+                                <div className="text-sm font-semibold text-accent">{item.score}% match</div>
+                                <div className={`text-xs px-2 py-1 rounded-full font-medium ${
+                                  item.status === 'Applied' ? 'bg-accent/10 text-accent' :
+                                  item.status === 'Tailored' ? 'bg-blue-100 text-blue-700' :
+                                  'bg-gray-100 text-gray-700'
+                                }`}>
+                                  {item.status}
+                                </div>
+                              </div>
+                              <ChevronRight size={18} className="text-gray-400" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Quick Actions & Video Interview */}
+                  <div className="space-y-6">
+                    {/* Quick Actions */}
+                    <div className="card p-6">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+                      <div className="space-y-3">
+                        <button className="w-full flex items-center gap-3 p-3 bg-primary/5 hover:bg-primary/10 border border-primary/20 rounded-lg text-left transition-colors group">
+                          <Upload size={18} className="text-primary" />
+                          <span className="font-medium text-primary">Upload Resume</span>
+                        </button>
+                        <button className="w-full flex items-center gap-3 p-3 bg-secondary/5 hover:bg-secondary/10 border border-secondary/20 rounded-lg text-left transition-colors group">
+                          <Search size={18} className="text-secondary" />
+                          <span className="font-medium text-secondary">Find Jobs</span>
+                        </button>
+                        <button
+                          onClick={startVideoInterview}
+                          className="w-full flex items-center gap-3 p-3 bg-accent/5 hover:bg-accent/10 border border-accent/20 rounded-lg text-left transition-colors group"
+                        >
+                          <Video size={18} className="text-accent" />
+                          <span className="font-medium text-accent">Practice Interview</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Video Interview Status */}
+                    {isVideoInterviewActive && videoRoom && (
+                      <div className="card p-6 border-accent/20 bg-accent/5">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-8 h-8 bg-accent/10 rounded-lg flex items-center justify-center">
+                            <Video size={16} className="text-accent" />
+                          </div>
+                          <h4 className="font-semibold text-gray-900">Video Interview Active</h4>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-4">
+                          Your interview room is ready! Share this link with your interviewer:
+                        </p>
+                        <div className="bg-white p-3 rounded-lg border border-gray-200 mb-4">
+                          <code className="text-xs text-gray-800 break-all">{videoRoom.room_url}</code>
+                        </div>
+                        <div ref={videoRef} className="w-full bg-gray-900 rounded-lg overflow-hidden mb-4" style={{height: '200px'}}></div>
+                        <button
+                          onClick={endVideoInterview}
+                          className="w-full py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-medium"
+                        >
+                          End Interview
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Upcoming Interviews */}
+                    <div className="card p-6">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Upcoming Interviews</h3>
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
+                          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <Video size={16} className="text-blue-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900 text-sm">Google - Software Engineer</p>
+                            <p className="text-xs text-gray-600">Tomorrow at 2:00 PM</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+                          <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                            <Video size={16} className="text-green-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900 text-sm">Meta - Frontend Developer</p>
+                            <p className="text-xs text-gray-600">Friday at 10:00 AM</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Search Results */}
+            {searchResults.length > 0 && (
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="mb-8">
+                <div className="card p-6">
+                  <div className="flex justify-between items-center mb-6">
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-900">Job Search Results</h3>
+                      <p className="text-gray-600 text-sm mt-1">Found {searchResults.length} opportunities matching your criteria</p>
+                    </div>
+                    <button onClick={() => setSearchResults([])} className="btn-secondary px-4 py-2 text-sm">
+                      Clear Results
+                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    {searchResults.map((job, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer group"
+                        onClick={() => { setJobUrl(job.url); setSearchResults([]); setActiveTab('results'); }}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                            <Briefcase size={20} className="text-primary" />
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-gray-900 group-hover:text-primary transition-colors">{job.title}</h4>
+                            <p className="text-sm text-gray-600">{job.snippet?.substring(0, 100)}...</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="badge badge-primary">LinkedIn</span>
+                          <ArrowRight size={18} className="text-gray-400 group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Results Page */}
+            {activeTab === 'results' && result && (
+              <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}>
+                <div className="max-w-4xl mx-auto space-y-6">
+                  {/* Header */}
+                  <div className="flex justify-between items-center">
+                    <button onClick={() => setActiveTab('dashboard')} className="btn-secondary px-4 py-2 text-sm flex items-center gap-2">
+                      <ArrowRight size={16} className="rotate-180" /> Back to Dashboard
+                    </button>
+                    <div className="flex gap-3">
+                      <button onClick={() => handleDownload(result.optimized_resume, 'Optimized_Resume.pdf')} className="btn-primary px-4 py-2 text-sm">
+                        Download Resume
+                      </button>
+                      <button onClick={() => handleDownload(result.cover_letter, 'Cover_Letter.pdf')} className="btn-secondary px-4 py-2 text-sm">
+                        Download Cover Letter
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Match Score */}
+                  <div className="card p-8 text-center">
+                    <div className="w-32 h-32 mx-auto mb-6 relative">
+                      <svg className="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
+                        <circle cx="60" cy="60" r="54" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-gray-200" />
+                        <motion.circle
+                          cx="60" cy="60" r="54"
+                          stroke="currentColor"
+                          strokeWidth="8"
+                          fill="transparent"
+                          strokeDasharray={339.292}
+                          initial={{ strokeDashoffset: 339.292 }}
+                          animate={{ strokeDashoffset: 339.292 - (339.292 * result.match_score) / 100 }}
+                          transition={{ duration: 2, ease: "easeOut" }}
+                          className="text-primary"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <span className="text-3xl font-bold text-primary">{result.match_score}%</span>
+                        <span className="text-xs text-gray-500 uppercase tracking-wide">Match Score</span>
+                      </div>
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Excellent Match!</h3>
+                    <p className="text-gray-600">Your profile aligns well with this position. Here's your optimized application.</p>
+                  </div>
+
+                  {/* Application Content */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="card p-6">
+                      <h4 className="text-lg font-semibold text-gray-900 mb-4">Optimized Resume</h4>
+                      <div className="bg-gray-50 p-4 rounded-lg max-h-96 overflow-y-auto">
+                        <pre className="text-sm text-gray-800 whitespace-pre-wrap font-mono">{result.optimized_resume}</pre>
+                      </div>
+                    </div>
+
+                    <div className="card p-6">
+                      <h4 className="text-lg font-semibold text-gray-900 mb-4">Cover Letter</h4>
+                      <div className="bg-gray-50 p-4 rounded-lg max-h-96 overflow-y-auto">
+                        <pre className="text-sm text-gray-800 whitespace-pre-wrap font-mono">{result.cover_letter}</pre>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </main>
+    </div>
+  );
 
       {/* Main Body */}
       <main className="flex-1 flex flex-col overflow-hidden relative">
@@ -711,93 +1136,450 @@ function App() {
   );
 }
 
-// Landing Page - The "Software Engineer" Professional Intro
+// Landing Page - Professional SaaS Design
 function LandingPage({ onStart }) {
   const { scrollYProgress } = useScroll();
-  
-  return (
-    <div className="min-h-screen bg-dark text-white font-sans overflow-x-hidden relative selection:bg-primary/30">
-      {/* Precision Grid Background */}
-      <div className="fixed inset-0 z-0 opacity-20" 
-           style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.05) 1px, transparent 0)', backgroundSize: '40px 40px' }} />
-      
-      {/* Dynamic Background Orbs */}
-      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[10%] left-[-10%] w-[800px] h-[800px] bg-primary/10 rounded-full blur-[150px] animate-pulse-slow" />
-        <div className="absolute bottom-[10%] right-[-10%] w-[800px] h-[800px] bg-secondary/10 rounded-full blur-[150px] animate-pulse-slow" />
-      </div>
 
-      {/* Modern Nav */}
-      <nav className="fixed top-0 inset-x-0 h-20 flex items-center justify-between px-12 z-50 bg-dark/40 backdrop-blur-2xl border-b border-white/5">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
-            <Rocket size={20} className="text-white" />
+  return (
+    <div className="min-h-screen bg-gray-50 text-gray-900 font-sans overflow-x-hidden">
+      {/* Professional Navigation */}
+      <nav className="fixed top-0 inset-x-0 h-16 bg-white/80 backdrop-blur-lg border-b border-gray-200 z-50">
+        <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+              <Rocket size={18} className="text-white" />
+            </div>
+            <span className="text-xl font-display font-bold tracking-tight">JobAI <span className="text-primary">Pro</span></span>
           </div>
-          <span className="text-xl font-display font-extrabold tracking-tighter">JobAI <span className="text-primary">Agent</span></span>
+
+          <div className="hidden md:flex items-center gap-8">
+            <NavLink label="Features" />
+            <NavLink label="Solutions" />
+            <NavLink label="Pricing" />
+            <NavLink label="About" />
+          </div>
+
+          <div className="flex items-center gap-4">
+            <button className="btn-ghost px-4 py-2 text-sm">Sign In</button>
+            <button onClick={onStart} className="btn-primary px-6 py-2 text-sm">
+              Get Started
+            </button>
+          </div>
         </div>
-        <div className="hidden md:flex items-center gap-10">
-          <NavLink label="Technology" />
-          <NavLink label="Solutions" />
-          <NavLink label="Enterprise" />
-          <NavLink label="Pricing" />
-        </div>
-        <button onClick={onStart} className="btn-pro px-7 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2">
-          Sign In <ArrowRight size={14} />
-        </button>
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-48 pb-32 px-10 relative z-10 max-w-6xl mx-auto flex flex-col items-center text-center">
-        <motion.div 
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-          className="space-y-8"
-        >
-          <div className="inline-flex items-center gap-2.5 px-4 py-1.5 bg-white/5 border border-white/10 rounded-full mb-4 backdrop-blur-xl">
-            <span className="flex h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Next-Gen Application Protocol</span>
-          </div>
-          <h1 className="text-6xl md:text-8xl font-display font-extrabold tracking-tighter leading-[1] heading-pro">
-            Automate Your <br />
-            Career <span className="text-white">Growth.</span>
-          </h1>
-          <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto font-medium leading-relaxed">
-            Engineered for elite developers. Our AI agent automates the entire application pipeline with surgical precision and ATS-optimized logic.
-          </p>
-          <div className="flex flex-col md:flex-row gap-5 justify-center pt-6">
-            <button onClick={onStart} className="btn-pro px-10 py-4 rounded-2xl text-base flex items-center gap-3 group">
-              Get Started <Zap size={20} className="group-hover:scale-110 transition-transform" />
-            </button>
-            <button className="px-10 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-base font-bold flex items-center gap-3 transition-all group">
-              View Specs <Cpu size={20} className="text-slate-500 group-hover:text-primary transition-colors" />
-            </button>
-          </div>
-        </motion.div>
+      <section className="pt-24 pb-20 px-6 relative">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            {/* Left Content */}
+            <motion.div
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+              className="space-y-8"
+            >
+              <div className="inline-flex items-center gap-2 badge badge-primary">
+                <span className="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
+                AI-Powered Career Platform
+              </div>
 
-        {/* Professional Image Mockup */}
-        <motion.div 
-          initial={{ opacity: 0, y: 100 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 1.2, delay: 0.2 }}
-          className="mt-32 w-full max-w-5xl glass-panel p-2 rounded-[32px] overflow-hidden shadow-2xl relative group"
-        >
-          <div className="absolute inset-0 bg-gradient-to-t from-dark/80 to-transparent z-10 pointer-events-none" />
-          <img 
-            src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=2000" 
-            alt="Dev Workspace" 
-            className="w-full h-[500px] object-cover rounded-[30px] opacity-60 group-hover:opacity-80 transition-opacity duration-1000 grayscale group-hover:grayscale-0"
-          />
-          <div className="absolute bottom-12 left-12 right-12 z-20 flex justify-between items-end">
-            <div className="text-left">
-              <h3 className="text-3xl font-display font-black mb-2">Build. Optimize. Deploy.</h3>
-              <p className="text-slate-400 font-medium">The complete stack for high-velocity career moves.</p>
+              <h1 className="text-hero text-gray-900">
+                Land Your Dream Job with
+                <span className="text-primary block">AI Precision</span>
+              </h1>
+
+              <p className="text-body max-w-lg">
+                Transform your job search with intelligent automation. Our AI analyzes thousands of opportunities,
+                optimizes your applications, and connects you with the perfect roles.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button onClick={onStart} className="btn-primary px-8 py-4 text-base flex items-center justify-center gap-2">
+                  Start Free Trial <ArrowRight size={18} />
+                </button>
+                <button className="btn-secondary px-8 py-4 text-base flex items-center justify-center gap-2">
+                  <Play size={18} /> Watch Demo
+                </button>
+              </div>
+
+              {/* Trust Indicators */}
+              <div className="flex items-center gap-8 pt-8">
+                <div className="flex items-center gap-2">
+                  <CheckCircle size={20} className="text-accent" />
+                  <span className="text-sm font-medium text-gray-600">Free 14-day trial</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle size={20} className="text-accent" />
+                  <span className="text-sm font-medium text-gray-600">No credit card required</span>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Right Content - Dashboard Preview */}
+            <motion.div
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="relative"
+            >
+              <div className="card-pro p-8 bg-white shadow-2xl">
+                {/* Mock Dashboard Header */}
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                      <BarChart3 size={16} className="text-white" />
+                    </div>
+                    <span className="font-semibold text-gray-900">JobAI Dashboard</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="w-3 h-3 bg-red-400 rounded-full"></div>
+                    <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
+                    <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+                  </div>
+                </div>
+
+                {/* Mock Stats */}
+                <div className="grid grid-cols-3 gap-4 mb-6">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-primary">247</div>
+                    <div className="text-xs text-gray-500 uppercase tracking-wide">Applications</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-accent">89%</div>
+                    <div className="text-xs text-gray-500 uppercase tracking-wide">Match Rate</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-secondary">12</div>
+                    <div className="text-xs text-gray-500 uppercase tracking-wide">Interviews</div>
+                  </div>
+                </div>
+
+                {/* Mock Job Cards */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                        <Briefcase size={18} className="text-primary" />
+                      </div>
+                      <div>
+                        <div className="font-medium text-sm text-gray-900">Senior Software Engineer</div>
+                        <div className="text-xs text-gray-500">Google • Mountain View, CA</div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-semibold text-accent">95% match</div>
+                      <div className="text-xs text-gray-500">2 hours ago</div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-secondary/10 rounded-lg flex items-center justify-center">
+                        <Code size={18} className="text-secondary" />
+                      </div>
+                      <div>
+                        <div className="font-medium text-sm text-gray-900">Full Stack Developer</div>
+                        <div className="text-xs text-gray-500">Meta • Menlo Park, CA</div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-semibold text-accent">87% match</div>
+                      <div className="text-xs text-gray-500">5 hours ago</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Floating Elements */}
+              <div className="absolute -top-4 -right-4 w-20 h-20 bg-primary/10 rounded-full blur-xl"></div>
+              <div className="absolute -bottom-4 -left-4 w-16 h-16 bg-secondary/10 rounded-full blur-xl"></div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-20 px-6 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-section text-gray-900 mb-4">
+              Everything You Need to Land Your Dream Job
+            </h2>
+            <p className="text-body max-w-2xl mx-auto">
+              Our comprehensive platform combines AI-powered insights, automated applications,
+              and professional networking tools to accelerate your career growth.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              className="feature-card"
+            >
+              <div className="feature-icon">
+                <Search size={32} />
+              </div>
+              <h3 className="feature-title">Smart Job Matching</h3>
+              <p className="feature-description">
+                AI analyzes your profile and matches you with relevant opportunities
+                across 1000+ companies and platforms.
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+              className="feature-card"
+            >
+              <div className="feature-icon">
+                <FileText size={32} />
+              </div>
+              <h3 className="feature-title">Resume Optimization</h3>
+              <p className="feature-description">
+                Automatically tailor your resume and cover letters for each application
+                with ATS-optimized formatting.
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3 }}
+              className="feature-card"
+            >
+              <div className="feature-icon">
+                <Video size={32} />
+              </div>
+              <h3 className="feature-title">Video Interviews</h3>
+              <p className="feature-description">
+                Practice interviews with AI feedback and conduct real-time video calls
+                with recruiters seamlessly.
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.4 }}
+              className="feature-card"
+            >
+              <div className="feature-icon">
+                <BarChart3 size={32} />
+              </div>
+              <h3 className="feature-title">Analytics Dashboard</h3>
+              <p className="feature-description">
+                Track your application success rates, interview performance,
+                and career progress with detailed insights.
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.5 }}
+              className="feature-card"
+            >
+              <div className="feature-icon">
+                <Users size={32} />
+              </div>
+              <h3 className="feature-title">Networking Tools</h3>
+              <p className="feature-description">
+                Connect with industry professionals, join communities,
+                and expand your professional network.
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.6 }}
+              className="feature-card"
+            >
+              <div className="feature-icon">
+                <Zap size={32} />
+              </div>
+              <h3 className="feature-title">Automation Engine</h3>
+              <p className="feature-description">
+                Automate repetitive tasks like application tracking,
+                follow-up emails, and deadline reminders.
+              </p>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="py-20 px-6 bg-gray-900 text-white">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-section mb-4">Trusted by Professionals Worldwide</h2>
+            <p className="text-body text-gray-300 max-w-2xl mx-auto">
+              Join thousands of successful professionals who have accelerated their careers with JobAI Pro.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              className="text-center"
+            >
+              <div className="stat-number">50K+</div>
+              <div className="stat-label text-gray-300">Active Users</div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+              className="text-center"
+            >
+              <div className="stat-number">1M+</div>
+              <div className="stat-label text-gray-300">Applications Sent</div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3 }}
+              className="text-center"
+            >
+              <div className="stat-number">85%</div>
+              <div className="stat-label text-gray-300">Success Rate</div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.4 }}
+              className="text-center"
+            >
+              <div className="stat-number">500+</div>
+              <div className="stat-label text-gray-300">Partner Companies</div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 px-6 bg-primary">
+        <div className="max-w-4xl mx-auto text-center text-white">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="space-y-8"
+          >
+            <h2 className="text-section">
+              Ready to Transform Your Job Search?
+            </h2>
+            <p className="text-body text-blue-100 max-w-2xl mx-auto">
+              Join thousands of professionals who have landed their dream jobs with JobAI Pro.
+              Start your free trial today and see the difference AI can make.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button onClick={onStart} className="bg-white text-primary px-8 py-4 rounded-lg font-semibold hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
+                Start Free Trial <ArrowRight size={18} />
+              </button>
+              <button className="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold hover:bg-white hover:text-primary transition-colors">
+                Schedule Demo
+              </button>
             </div>
-            <div className="flex gap-3">
-              <div className="w-12 h-12 bg-white/10 backdrop-blur-xl rounded-xl flex items-center justify-center border border-white/10"><Code size={20} /></div>
-              <div className="w-12 h-12 bg-white/10 backdrop-blur-xl rounded-xl flex items-center justify-center border border-white/10"><Cpu size={20} /></div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-12 px-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                  <Rocket size={18} className="text-white" />
+                </div>
+                <span className="text-xl font-display font-bold">JobAI Pro</span>
+              </div>
+              <p className="text-gray-400 text-sm">
+                AI-powered career acceleration platform for modern professionals.
+              </p>
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-4">Product</h4>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li><a href="#" className="hover:text-white transition-colors">Features</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Pricing</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">API</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Integrations</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-4">Company</h4>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li><a href="#" className="hover:text-white transition-colors">About</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-4">Support</h4>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Documentation</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Community</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Status</a></li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
+            <p className="text-gray-400 text-sm">© 2024 JobAI Pro. All rights reserved.</p>
+            <div className="flex gap-6 mt-4 md:mt-0">
+              <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                <Github size={18} />
+              </a>
+              <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                <Twitter size={18} />
+              </a>
+              <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                <LinkedinIcon size={18} />
+              </a>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
             </div>
           </div>
         </motion.div>
