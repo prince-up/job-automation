@@ -6,9 +6,14 @@ import {
   Briefcase, User, Search, Bell, ChevronRight, Zap,
   AlertCircle, ShieldCheck, Globe, Cpu, MousePointer2, 
   ArrowRight, Star, Target, Rocket, Layers, BarChart3,
-  ExternalLink, Code as Github, Send as Twitter, Users as LinkedinIcon,
+  ExternalLink, Code, Send, Users,
   Check, X
 } from 'lucide-react';
+
+// Use aliases for brand icons that don't exist in Lucide
+const Github = Code;
+const Twitter = Send;
+const LinkedinIcon = Users;
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 
 const API_BASE = 'http://localhost:8000';
