@@ -1,0 +1,122 @@
+from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+import fitz  # PyMuPDF
+import openai
+import os
+from dotenv import load_dotenv
+from bs4 import BeautifulSoup
+import requests
+
+load_dotenv()
+
+app = FastAPI(title="JobAI Agent API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+class JobRequest(BaseModel):
+    url: str = None
+    job_text: str = None
+    resume_text: str
+
+@app.get("/")
+async def root():
+    return {"message": "JobAI Agent Backend is running"}
+
+@app.post("/upload-resume")
+async def upload_resume(file: UploadFile = File(...)):
+    if not file.filename.endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Only PDF files are supported")
+    
+    try:
+        contents = await file.read()
+        doc = fitz.open(stream=contents, filetype="pdf")
+        text = ""
+        for page in doc:
+            text += page.get_text()
+        return {"resume_text": text}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/process-job")
+async def process_job(request: JobRequest):
+    job_description = request.job_text
+    
+    if request.url and not job_description:
+        try:
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+            response = requests.get(request.url, headers=headers)
+            soup = BeautifulSoup(response.text, 'html.parser')
+            
+            # Remove script and style elements
+            for tag in soup(["script", "style"]):
+                tag.decompose()
+
+            job_description = soup.get_text(separator=' ', strip=True)
+            # Limit length to avoid token issues
+            job_description = job_description[:4000]
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Failed to scrape URL: {str(e)}")
+
+    if not job_description:
+        raise HTTPException(status_code=400, detail="Job description or URL is required")
+
+    try:
+        client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        
+        system_prompt = "You are an expert career coach and resume writer. Your goal is to help candidates get hired by optimizing their resumes and writing compelling cover letters."
+        
+        user_prompt = f"""
+        Analyze the following Resume and Job Description.
+        
+        RESUME:
+        {request.resume_text}
+        
+        JOB DESCRIPTION:
+        {job_description}
+        
+        Please provide:
+        1. An 'optimized_resume' summary and key bullet points tailored to this specific job.
+        2. A professional 'cover_letter' (max 400 words).
+        3. A 'match_score' between 0 and 100 based on requirements.
+        
+        Output MUST be in valid JSON format with keys: optimized_resume, cover_letter, match_score.
+        """
+
+        # In case the user hasn't provided an API key yet, we return a helpful mock
+        if not os.getenv("OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY") == "your_openai_api_key_here":
+            return {
+                "optimized_resume": "AI Optimization: As a DevOps Engineer, highlight your experience with Kubernetes and CI/CD pipelines mentioned in the job description. (Note: OpenAI API Key not configured)",
+                "cover_letter": "Dear Hiring Manager,\n\nI am excited to apply for the DevOps position... (Note: This is a placeholder as the API key is missing)",
+                "match_score": 75
+            }
+
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo-1106", # Using 1106 for JSON mode support
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            response_format={ "type": "json_object" }
+        )
+        
+        import json
+        result = json.loads(response.choices[0].message.content)
+        return result
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
