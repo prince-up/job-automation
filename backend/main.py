@@ -181,6 +181,45 @@ async def generate_pdf(request: dict):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/search-jobs")
+async def search_jobs(request: dict):
+    query = request.get("query")
+    apify_token = os.getenv("APIFY_API_TOKEN")
+    
+    if not query:
+        raise HTTPException(status_code=400, detail="Query is required")
+    if not apify_token:
+        raise HTTPException(status_code=400, detail="Apify API Token not configured")
+        
+    try:
+        client = ApifyClient(apify_token)
+        # Using a specialized scraper for better structured data
+        run_input = {
+            "queries": query,
+            "maxPagesPerQuery": 1
+        }
+        # For simplicity and speed in this demo, we'll use rag-web-browser with search keywords
+        # But formatted for job results
+        run = client.actor("apify/rag-web-browser").call(run_input={
+            "query": f"site:linkedin.com/jobs {query}",
+            "maxResults": 5
+        })
+        
+        results = list(client.dataset(run["defaultDatasetId"]).iterate_items())
+        # Transform results to a standard job format
+        jobs = []
+        for res in results:
+            jobs.append({
+                "id": res.get("url"),
+                "title": res.get("metadata", {}).get("title", "Job Opportunity"),
+                "company": "LinkedIn",
+                "url": res.get("url"),
+                "snippet": res.get("markdown", "")[:200] + "..."
+            })
+        return {"jobs": jobs}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

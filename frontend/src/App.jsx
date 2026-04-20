@@ -48,6 +48,23 @@ function App() {
     }
   };
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  const handleSearchJobs = async () => {
+    if (!searchQuery) return;
+    setIsSearching(true);
+    try {
+      const res = await axios.post(`${API_BASE}/search-jobs`, { query: searchQuery });
+      setSearchResults(res.data.jobs);
+    } catch (err) {
+      setError('Failed to fetch jobs from LinkedIn.');
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   const handleProcess = async () => {
     if (!file || !jobUrl) {
       setError('Please upload a resume and provide a Job URL.');
@@ -125,17 +142,25 @@ function App() {
 
         {/* Top bar */}
         <header className="h-20 border-b border-white/5 px-8 flex items-center justify-between bg-dark/40 backdrop-blur-xl z-20">
-          <div className="flex items-center gap-4 bg-white/5 px-5 py-2.5 rounded-2xl border border-white/5 w-[400px] focus-within:border-primary/50 transition-all">
+          <div className="flex items-center gap-4 bg-white/5 px-5 py-2.5 rounded-2xl border border-white/5 w-[500px] focus-within:border-primary/50 transition-all">
             <Search size={18} className="text-slate-500" />
-            <input type="text" placeholder="Search your dream job..." className="bg-transparent border-none outline-none text-sm w-full placeholder:text-slate-600" />
+            <input 
+              type="text" 
+              placeholder="Search LinkedIn jobs (e.g. 'DevOps Engineer Remote')..." 
+              className="bg-transparent border-none outline-none text-sm w-full placeholder:text-slate-600" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearchJobs()}
+            />
+            {isSearching && <Loader2 className="animate-spin text-primary" size={18} />}
           </div>
           <div className="flex items-center gap-6">
             <div className="flex gap-2">
               <HeaderIcon icon={<Bell size={18} />} hasBadge />
               <HeaderIcon icon={<Globe size={18} />} />
             </div>
-            <button className="btn-premium px-6 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2">
-              <Zap size={16} /> New Hunt
+            <button className="btn-premium px-6 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2" onClick={handleSearchJobs}>
+              {isSearching ? <Loader2 className="animate-spin" size={16} /> : <Zap size={16} />} Find Jobs
             </button>
           </div>
         </header>
@@ -149,6 +174,39 @@ function App() {
           <AnimatePresence mode="wait">
             {activeTab === 'dashboard' && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-10">
+                {/* Search Results Section */}
+                {searchResults.length > 0 && (
+                  <div className="glass-morphism p-8 border-indigo-500/20 bg-indigo-500/5">
+                    <div className="flex justify-between items-center mb-6">
+                      <h3 className="text-xl font-bold flex items-center gap-3">
+                        <Briefcase className="text-indigo-400" /> LinkedIn Job Results
+                      </h3>
+                      <button onClick={() => setSearchResults([])} className="text-xs text-slate-500 hover:text-white">Clear Results</button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {searchResults.map((job, index) => (
+                        <div 
+                          key={index} 
+                          className="p-5 rounded-2xl bg-white/5 border border-white/5 hover:border-indigo-500/50 transition-all cursor-pointer group"
+                          onClick={() => {
+                            setJobUrl(job.url);
+                            setSearchResults([]);
+                          }}
+                        >
+                          <div className="flex justify-between items-start mb-2">
+                            <h4 className="font-bold text-sm text-slate-200 group-hover:text-indigo-400">{job.title}</h4>
+                            <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-2 py-1 rounded font-bold uppercase">LinkedIn</span>
+                          </div>
+                          <p className="text-[11px] text-slate-500 line-clamp-2">{job.snippet}</p>
+                          <div className="mt-3 flex items-center gap-2 text-[10px] text-indigo-400 font-bold uppercase">
+                            <Zap size={12} /> Click to Autofill URL
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex justify-between items-end">
                   <div>
                     <h2 className="text-3xl font-bold tracking-tight">Welcome back, Lucky 👋</h2>
