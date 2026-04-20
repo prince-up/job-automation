@@ -117,6 +117,45 @@ async def process_job(request: JobRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from fastapi.responses import FileResponse
+import tempfile
+
+@app.post("/generate-pdf")
+async def generate_pdf(request: dict):
+    content = request.get("content")
+    if not content:
+        raise HTTPException(status_code=400, detail="Content is required")
+    
+    try:
+        # Create a temporary file
+        fd, path = tempfile.mkstemp(suffix=".pdf")
+        c = canvas.Canvas(path, pagesize=letter)
+        width, height = letter
+        
+        # Simple text wrapping logic for the PDF
+        textobject = c.beginText()
+        textobject.setTextOrigin(50, height - 50)
+        textobject.setFont("Helvetica", 12)
+        
+        lines = content.split('\n')
+        for line in lines:
+            # Very basic line splitting
+            while len(line) > 80:
+                textobject.textLine(line[:80])
+                line = line[80:]
+            textobject.textLine(line)
+        
+        c.drawText(textobject)
+        c.showPage()
+        c.save()
+        os.close(fd)
+        
+        return FileResponse(path, filename="Optimized_Resume.pdf", media_type="application/pdf")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
