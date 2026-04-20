@@ -239,9 +239,27 @@ function App() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 xl:grid-cols-3 gap-10">
+                <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+                  {/* Pipeline Visualization */}
+                  <div className="xl:col-span-4 glass-panel p-6 bg-primary/5 border-primary/20">
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
+                        <Cpu size={16} className="text-primary" /> Active Pipeline Status
+                      </h3>
+                      <div className="flex gap-2">
+                        <PipelineNode label="Scrape" active={isProcessing} />
+                        <div className="w-8 h-px bg-white/10 mt-2.5" />
+                        <PipelineNode label="Analyze" active={isProcessing} />
+                        <div className="w-8 h-px bg-white/10 mt-2.5" />
+                        <PipelineNode label="Synthesize" active={isProcessing} />
+                        <div className="w-8 h-px bg-white/10 mt-2.5" />
+                        <PipelineNode label="Export" active={false} />
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Primary Action Card */}
-                  <div className="xl:col-span-2 glass-panel p-10 relative overflow-hidden group">
+                  <div className="xl:col-span-3 glass-panel p-10 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-32 bg-primary/10 rounded-full blur-[100px] group-hover:bg-primary/20 transition-all duration-1000" />
                     
                     <div className="relative">
@@ -607,130 +625,189 @@ function App() {
   );
 }
 
-// Landing Page - The "Pro" Intro
+// Landing Page - The "Software Engineer" Professional Intro
 function LandingPage({ onStart }) {
   const { scrollYProgress } = useScroll();
-  const y1 = useTransform(scrollYProgress, [0, 1], [0, -200]);
   
   return (
     <div className="min-h-screen bg-dark text-white font-sans overflow-x-hidden relative selection:bg-primary/30">
-      {/* Dynamic Background */}
-      <div className="fixed inset-0 z-0">
-        <div className="absolute top-[10%] left-[5%] w-[600px] h-[600px] bg-primary/10 rounded-full blur-[150px] animate-pulse-slow" />
-        <div className="absolute bottom-[10%] right-[5%] w-[600px] h-[600px] bg-secondary/10 rounded-full blur-[150px] animate-pulse-slow" />
-        <div className="absolute top-[40%] left-[40%] w-[400px] h-[400px] bg-emerald-500/5 rounded-full blur-[120px] animate-pulse-slow" />
+      {/* Precision Grid Background */}
+      <div className="fixed inset-0 z-0 opacity-20" 
+           style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.05) 1px, transparent 0)', backgroundSize: '40px 40px' }} />
+      
+      {/* Dynamic Background Orbs */}
+      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[10%] left-[-10%] w-[800px] h-[800px] bg-primary/10 rounded-full blur-[150px] animate-pulse-slow" />
+        <div className="absolute bottom-[10%] right-[-10%] w-[800px] h-[800px] bg-secondary/10 rounded-full blur-[150px] animate-pulse-slow" />
       </div>
 
-      {/* Nav */}
-      <nav className="fixed top-0 inset-x-0 h-24 flex items-center justify-between px-10 z-50 bg-dark/20 backdrop-blur-xl border-b border-white/5">
+      {/* Modern Nav */}
+      <nav className="fixed top-0 inset-x-0 h-20 flex items-center justify-between px-12 z-50 bg-dark/40 backdrop-blur-2xl border-b border-white/5">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20">
-            <Rocket size={22} className="text-white" />
+          <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
+            <Rocket size={20} className="text-white" />
           </div>
-          <span className="text-2xl font-display font-black tracking-tight">JobAI <span className="text-primary">Agent</span></span>
+          <span className="text-xl font-display font-extrabold tracking-tighter">JobAI <span className="text-primary">Agent</span></span>
         </div>
         <div className="hidden md:flex items-center gap-10">
-          <NavLink label="How it works" />
+          <NavLink label="Technology" />
+          <NavLink label="Solutions" />
           <NavLink label="Enterprise" />
-          <NavLink label="Careers" />
           <NavLink label="Pricing" />
         </div>
-        <button onClick={onStart} className="btn-pro px-8 py-3 rounded-2xl text-sm flex items-center gap-2">
-          Get Started <ArrowRight size={16} />
+        <button onClick={onStart} className="btn-pro px-7 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2">
+          Sign In <ArrowRight size={14} />
         </button>
       </nav>
 
-      {/* Hero */}
-      <section className="pt-48 pb-32 px-10 relative z-10 max-w-7xl mx-auto flex flex-col items-center text-center">
+      {/* Hero Section */}
+      <section className="pt-48 pb-32 px-10 relative z-10 max-w-6xl mx-auto flex flex-col items-center text-center">
         <motion.div 
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="space-y-10"
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+          className="space-y-8"
         >
-          <div className="inline-flex items-center gap-3 px-6 py-2.5 bg-white/5 border border-white/10 rounded-full mb-6 backdrop-blur-xl">
-            <span className="flex h-2 w-2 rounded-full bg-primary animate-ping" />
-            <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-300">v4.0 Protocol Active</span>
+          <div className="inline-flex items-center gap-2.5 px-4 py-1.5 bg-white/5 border border-white/10 rounded-full mb-4 backdrop-blur-xl">
+            <span className="flex h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Next-Gen Application Protocol</span>
           </div>
-          <h1 className="text-7xl md:text-9xl font-display font-black tracking-tighter leading-[0.9] heading-pro">
-            Apply to Jobs <br />
-            <span className="text-white">With God-Like</span> <br />
-            Efficiency.
+          <h1 className="text-6xl md:text-8xl font-display font-extrabold tracking-tighter leading-[1] heading-pro">
+            Automate Your <br />
+            Career <span className="text-white">Growth.</span>
           </h1>
-          <p className="text-xl md:text-2xl text-slate-400 max-w-3xl mx-auto font-medium leading-relaxed">
-            The world's first AI-powered job application agent that scrapes, analyzes, and optimizes your career in real-time. Stand out, get hired, and conquer the market.
+          <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto font-medium leading-relaxed">
+            Engineered for elite developers. Our AI agent automates the entire application pipeline with surgical precision and ATS-optimized logic.
           </p>
-          <div className="flex flex-col md:flex-row gap-6 justify-center pt-8">
-            <button onClick={onStart} className="btn-pro px-12 py-5 rounded-[32px] text-lg flex items-center gap-4 group">
-              Launch Dashboard <Rocket size={24} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
+          <div className="flex flex-col md:flex-row gap-5 justify-center pt-6">
+            <button onClick={onStart} className="btn-pro px-10 py-4 rounded-2xl text-base flex items-center gap-3 group">
+              Get Started <Zap size={20} className="group-hover:scale-110 transition-transform" />
             </button>
-            <button className="px-12 py-5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-[32px] text-lg font-bold flex items-center gap-4 transition-all">
-              Watch Demo <MousePointer2 size={24} />
+            <button className="px-10 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-base font-bold flex items-center gap-3 transition-all group">
+              View Specs <Cpu size={20} className="text-slate-500 group-hover:text-primary transition-colors" />
             </button>
           </div>
         </motion.div>
 
-        {/* Feature Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mt-48 w-full">
-          <FeatureCard 
-            icon={<Cpu className="text-primary" size={32} />} 
-            title="Semantic RAG Engine" 
-            desc="Our vector-based retrieval engine scans job requirements with 99.8% semantic accuracy." 
+        {/* Professional Image Mockup */}
+        <motion.div 
+          initial={{ opacity: 0, y: 100 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 1.2, delay: 0.2 }}
+          className="mt-32 w-full max-w-5xl glass-panel p-2 rounded-[32px] overflow-hidden shadow-2xl relative group"
+        >
+          <div className="absolute inset-0 bg-gradient-to-t from-dark/80 to-transparent z-10 pointer-events-none" />
+          <img 
+            src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=2000" 
+            alt="Dev Workspace" 
+            className="w-full h-[500px] object-cover rounded-[30px] opacity-60 group-hover:opacity-80 transition-opacity duration-1000 grayscale group-hover:grayscale-0"
           />
-          <FeatureCard 
-            icon={<ShieldCheck className="text-emerald-500" size={32} />} 
-            title="ATS Master Protocol" 
-            desc="Engineered specifically to bypass corporate filtering systems and land you in the top 1%." 
-          />
-          <FeatureCard 
-            icon={<Globe className="text-indigo-400" size={32} />} 
-            title="Universal Scraping" 
-            desc="Seamless integration with LinkedIn, Indeed, and more via our high-velocity Apify cluster." 
-          />
+          <div className="absolute bottom-12 left-12 right-12 z-20 flex justify-between items-end">
+            <div className="text-left">
+              <h3 className="text-3xl font-display font-black mb-2">Build. Optimize. Deploy.</h3>
+              <p className="text-slate-400 font-medium">The complete stack for high-velocity career moves.</p>
+            </div>
+            <div className="flex gap-3">
+              <div className="w-12 h-12 bg-white/10 backdrop-blur-xl rounded-xl flex items-center justify-center border border-white/10"><Code size={20} /></div>
+              <div className="w-12 h-12 bg-white/10 backdrop-blur-xl rounded-xl flex items-center justify-center border border-white/10"><Cpu size={20} /></div>
+            </div>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* Video Demo Section */}
+      <section className="py-32 px-10 relative z-10 max-w-6xl mx-auto border-t border-white/5">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+          <div className="space-y-8">
+            <div className="inline-block px-4 py-1 bg-primary/10 text-primary rounded-lg text-[10px] font-black uppercase tracking-widest border border-primary/20">Process Walkthrough</div>
+            <h2 className="text-5xl font-display font-black tracking-tight">See JobAI <br /> in Action.</h2>
+            <p className="text-slate-400 text-lg leading-relaxed font-medium">
+              Watch how our agent identifies job clusters, synthesizes ATS-optimized resumes, and handles the deployment phase with zero human intervention required.
+            </p>
+            <ul className="space-y-5">
+              <li className="flex items-center gap-4 text-sm font-bold text-slate-300">
+                <div className="w-6 h-6 bg-emerald-500/20 text-emerald-500 rounded-lg flex items-center justify-center"><Check size={14} /></div>
+                Real-time LinkedIn Scraping
+              </li>
+              <li className="flex items-center gap-4 text-sm font-bold text-slate-300">
+                <div className="w-6 h-6 bg-emerald-500/20 text-emerald-500 rounded-lg flex items-center justify-center"><Check size={14} /></div>
+                Neural Resume Synthesis
+              </li>
+              <li className="flex items-center gap-4 text-sm font-bold text-slate-300">
+                <div className="w-6 h-6 bg-emerald-500/20 text-emerald-500 rounded-lg flex items-center justify-center"><Check size={14} /></div>
+                One-Click Tailored Exports
+              </li>
+            </ul>
+          </div>
+          
+          {/* Video Player */}
+          <div className="relative group">
+            <div className="absolute inset-0 bg-primary/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+            <div className="glass-panel p-2 rounded-[32px] overflow-hidden relative z-10 shadow-2xl">
+              <div className="aspect-video bg-dark rounded-[30px] overflow-hidden flex items-center justify-center relative">
+                {/* Placeholder for Video Embed */}
+                <iframe 
+                  className="w-full h-full border-none" 
+                  src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=0&mute=1" 
+                  title="Demo Video" 
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                  allowFullScreen
+                ></iframe>
+                <div className="absolute inset-0 bg-dark/40 flex items-center justify-center group-hover:opacity-0 transition-opacity pointer-events-none">
+                  <div className="w-20 h-20 bg-white/10 backdrop-blur-2xl rounded-full flex items-center justify-center border border-white/20">
+                    <Zap className="text-white fill-white" size={32} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Value Prop with Real Images */}
+      <section className="py-32 px-10 relative z-10 bg-white/[0.01]">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-20 space-y-4">
+            <h2 className="text-4xl font-display font-black tracking-tight">Built for Competitive Markets.</h2>
+            <p className="text-slate-500 font-medium">Join 5,000+ engineers landing roles at Tier-1 companies.</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <FeatureWithImage 
+              img="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=1000"
+              title="Team Sync"
+              desc="Optimized for collaborative environments and high-growth startups."
+            />
+            <FeatureWithImage 
+              img="https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&q=80&w=1000"
+              title="Remote Ready"
+              desc="Specialized patterns for globally distributed tech companies."
+            />
+            <FeatureWithImage 
+              img="https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&q=80&w=1000"
+              title="Rapid Growth"
+              desc="Engineered to handle massive application volume with ease."
+            />
+          </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="mt-32 py-20 px-10 border-t border-white/5 relative z-10 bg-dark/40 backdrop-blur-3xl">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-20">
-          <div className="col-span-2 space-y-8">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20">
-                <Rocket size={22} className="text-white" />
-              </div>
-              <span className="text-2xl font-display font-black tracking-tight">JobAI <span className="text-primary">Agent</span></span>
+      <footer className="py-20 px-12 border-t border-white/5 relative z-10">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-lg">
+              <Rocket size={16} className="text-white" />
             </div>
-            <p className="text-slate-500 max-w-sm leading-relaxed font-medium">Built by career engineers for the next generation of global talent. Stand out or stay average.</p>
-            <div className="flex gap-6">
-              <SocialLink icon={<Twitter size={20} />} />
-              <SocialLink icon={<Github size={20} />} />
-              <SocialLink icon={<LinkedinIcon size={20} />} />
-            </div>
+            <span className="text-lg font-display font-extrabold tracking-tight">JobAI <span className="text-primary">Agent</span></span>
           </div>
-          <div>
-            <h4 className="font-display font-black text-white uppercase tracking-widest text-xs mb-8">Platform</h4>
-            <div className="flex flex-col gap-4 text-sm text-slate-500 font-bold">
-              <a href="#" className="hover:text-primary transition-colors">Features</a>
-              <a href="#" className="hover:text-primary transition-colors">API Docs</a>
-              <a href="#" className="hover:text-primary transition-colors">Integrations</a>
-              <a href="#" className="hover:text-primary transition-colors">Enterprise</a>
-            </div>
-          </div>
-          <div>
-            <h4 className="font-display font-black text-white uppercase tracking-widest text-xs mb-8">Support</h4>
-            <div className="flex flex-col gap-4 text-sm text-slate-500 font-bold">
-              <a href="#" className="hover:text-primary transition-colors">Community</a>
-              <a href="#" className="hover:text-primary transition-colors">Help Center</a>
-              <a href="#" className="hover:text-primary transition-colors">Security</a>
-              <a href="#" className="hover:text-primary transition-colors">Terms</a>
-            </div>
-          </div>
-        </div>
-        <div className="max-w-7xl mx-auto mt-20 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
-          <p className="text-[10px] font-black text-slate-700 uppercase tracking-[0.3em]">&copy; 2026 JobAI Agent • All Rights Reserved</p>
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[10px] font-black text-emerald-900 uppercase tracking-widest">Global Status: Operational</span>
+          <p className="text-xs font-bold text-slate-600 uppercase tracking-widest">Designed by Software Engineers in San Francisco</p>
+          <div className="flex gap-8">
+            <a href="#" className="text-slate-500 hover:text-white transition-colors"><Twitter size={18} /></a>
+            <a href="#" className="text-slate-500 hover:text-white transition-colors"><Github size={18} /></a>
+            <a href="#" className="text-slate-500 hover:text-white transition-colors"><LinkedinIcon size={18} /></a>
           </div>
         </div>
       </footer>
@@ -738,7 +815,31 @@ function LandingPage({ onStart }) {
   );
 }
 
+function FeatureWithImage({ img, title, desc }) {
+  return (
+    <div className="group relative rounded-[32px] overflow-hidden aspect-[4/5] glass-panel border-white/5">
+      <img src={img} alt={title} className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-60 group-hover:scale-105 transition-all duration-700 grayscale group-hover:grayscale-0" />
+      <div className="absolute inset-0 bg-gradient-to-t from-dark via-dark/40 to-transparent" />
+      <div className="absolute bottom-10 left-10 right-10">
+        <h4 className="text-2xl font-display font-black mb-2">{title}</h4>
+        <p className="text-slate-400 text-sm font-medium leading-relaxed">{desc}</p>
+      </div>
+    </div>
+  );
+}
+
 // Subcomponents Pro
+function PipelineNode({ label, active }) {
+  return (
+    <div className="flex flex-col items-center gap-2">
+      <div className={`w-6 h-6 rounded-lg border flex items-center justify-center transition-all ${active ? 'bg-primary border-primary shadow-lg shadow-primary/40 animate-pulse' : 'bg-white/5 border-white/10'}`}>
+        {active && <Zap size={12} className="text-white" />}
+      </div>
+      <span className={`text-[9px] font-black uppercase tracking-tighter ${active ? 'text-primary' : 'text-slate-600'}`}>{label}</span>
+    </div>
+  );
+}
+
 function SidebarItem({ icon, label, active, onClick }) {
   return (
     <div 
