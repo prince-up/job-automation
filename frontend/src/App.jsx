@@ -88,12 +88,12 @@ function App() {
   return (
     <div className="flex h-screen bg-[#020617] text-white">
       {/* Sidebar */}
-      <aside className="w-72 bg-[#0f172a]/50 border-r border-white/5 p-6 flex flex-col hidden lg:flex">
+      <aside className="w-72 bg-sidebar border-r border-white/5 p-6 flex flex-col hidden lg:flex">
         <div className="flex items-center gap-3 mb-10 px-2">
-          <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
-            <Sparkles size={20} />
+          <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
+            <Sparkles size={20} className="text-white" />
           </div>
-          <span className="text-xl font-bold tracking-tight">JobAI <span className="text-indigo-400">Agent</span></span>
+          <span className="text-xl font-extrabold tracking-tight">JobAI <span className="text-primary">Agent</span></span>
         </div>
 
         <nav className="space-y-2 flex-1">
@@ -103,32 +103,40 @@ function App() {
           <SidebarItem icon={<Settings size={20} />} label="AI Config" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
         </nav>
 
-        <div className="mt-auto glass-morphism p-4 border border-indigo-500/10">
+        <div className="mt-auto bg-white/5 border border-white/5 p-4 rounded-2xl">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500" />
+            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-primary to-secondary p-0.5">
+              <div className="w-full h-full rounded-full bg-sidebar flex items-center justify-center text-[10px] font-bold">LS</div>
+            </div>
             <div>
               <p className="text-xs font-bold">Lucky Singh</p>
-              <p className="text-[10px] text-slate-500 uppercase">Premium Member</p>
+              <p className="text-[10px] text-slate-500 uppercase font-bold tracking-tighter">Pro Developer</p>
             </div>
           </div>
-          <button className="w-full py-2 bg-white/5 hover:bg-white/10 rounded-lg text-xs font-bold transition-colors">Sign Out</button>
+          <button className="w-full py-2.5 bg-white/5 hover:bg-red-500/10 hover:text-red-400 rounded-xl text-[10px] font-bold transition-all border border-white/5">Sign Out</button>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-hidden relative">
+      <main className="flex-1 flex flex-col overflow-hidden relative bg-[#020617]">
+        {/* Animated Background Orbs */}
+        <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] animate-pulse-slow" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-secondary/10 rounded-full blur-[120px] animate-pulse-slow" />
+
         {/* Top bar */}
-        <header className="h-20 border-b border-white/5 px-8 flex items-center justify-between bg-[#020617]/50 backdrop-blur-md z-10">
-          <div className="flex items-center gap-4 bg-white/5 px-4 py-2 rounded-xl border border-white/5 w-96">
+        <header className="h-20 border-b border-white/5 px-8 flex items-center justify-between bg-dark/40 backdrop-blur-xl z-20">
+          <div className="flex items-center gap-4 bg-white/5 px-5 py-2.5 rounded-2xl border border-white/5 w-[400px] focus-within:border-primary/50 transition-all">
             <Search size={18} className="text-slate-500" />
-            <input type="text" placeholder="Search applications..." className="bg-transparent border-none outline-none text-sm w-full" />
+            <input type="text" placeholder="Search your dream job..." className="bg-transparent border-none outline-none text-sm w-full placeholder:text-slate-600" />
           </div>
           <div className="flex items-center gap-6">
-            <div className="relative">
-              <Bell size={20} className="text-slate-400 cursor-pointer hover:text-white" />
-              <span className="absolute -top-1 -right-1 w-2 h-2 bg-indigo-500 rounded-full border-2 border-[#020617]"></span>
+            <div className="flex gap-2">
+              <HeaderIcon icon={<Bell size={18} />} hasBadge />
+              <HeaderIcon icon={<Globe size={18} />} />
             </div>
-            <button className="btn-premium py-2 px-5 text-sm">New Application</button>
+            <button className="btn-premium px-6 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2">
+              <Zap size={16} /> New Hunt
+            </button>
           </div>
         </header>
 
@@ -397,22 +405,31 @@ function App() {
 function SidebarItem({ icon, label, active, onClick }) {
   return (
     <div 
-      className={`sidebar-item ${active ? 'active' : ''}`}
+      className={`sidebar-item flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all ${active ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'}`}
       onClick={onClick}
     >
       {icon}
-      <span>{label}</span>
+      <span className="text-sm font-bold">{label}</span>
+    </div>
+  );
+}
+
+function HeaderIcon({ icon, hasBadge }) {
+  return (
+    <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 cursor-pointer transition-all relative">
+      {icon}
+      {hasBadge && <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-primary rounded-full border-2 border-dark" />}
     </div>
   );
 }
 
 function StatCard({ label, value, trend }) {
   return (
-    <div className="bg-white/5 border border-white/5 rounded-2xl p-4 flex flex-col justify-center min-w-[140px]">
+    <div className="bg-white/5 border border-white/5 rounded-2xl p-5 flex flex-col justify-center min-w-[160px] glass-morphism">
       <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{label}</p>
-      <div className="flex items-baseline gap-2 mt-1">
-        <span className="text-xl font-bold">{value}</span>
-        <span className="text-[10px] text-emerald-400 font-bold">{trend}</span>
+      <div className="flex items-baseline gap-2 mt-2">
+        <span className="text-2xl font-black">{value}</span>
+        <span className="text-[10px] text-emerald-400 font-bold bg-emerald-400/10 px-1.5 py-0.5 rounded-md">{trend}</span>
       </div>
     </div>
   );
