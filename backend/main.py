@@ -46,27 +46,52 @@ async def upload_resume(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+from apify_client import ApifyClient
+
 @app.post("/process-job")
 async def process_job(request: JobRequest):
     job_description = request.job_text
+    apify_token = os.getenv("APIFY_API_TOKEN")
     
     if request.url and not job_description:
-        try:
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            }
-            response = requests.get(request.url, headers=headers)
-            soup = BeautifulSoup(response.text, 'html.parser')
-            
-            # Remove script and style elements
-            for tag in soup(["script", "style"]):
-                tag.decompose()
+        # Try Apify first if token is available
+        if apify_token:
+            try:
+                client = ApifyClient(apify_token)
+                run_input = {
+                    "query": request.url,
+                    "maxResults": 1,
+                }
+                # Run the actor and wait for it to finish
+                run = client.actor("apify/rag-web-browser").call(run_input=run_input)
+                
+                # Fetch results
+                results = list(client.dataset(run["defaultDatasetId"]).iterate_items())
+                if results and "text" in results[0]:
+                    job_description = results[0]["text"]
+                elif results and "markdown" in results[0]:
+                    job_description = results[0]["markdown"]
+                
+            except Exception as e:
+                print(f"Apify scraping failed: {str(e)}")
+                # Fall back to basic scraping below
 
-            job_description = soup.get_text(separator=' ', strip=True)
-            # Limit length to avoid token issues
-            job_description = job_description[:4000]
-        except Exception as e:
-            raise HTTPException(status_code=400, detail=f"Failed to scrape URL: {str(e)}")
+        # Fallback to basic scraping if Apify is not used or fails
+        if not job_description:
+            try:
+                headers = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                }
+                response = requests.get(request.url, headers=headers)
+                soup = BeautifulSoup(response.text, 'html.parser')
+                
+                for tag in soup(["script", "style"]):
+                    tag.decompose()
+
+                job_description = soup.get_text(separator=' ', strip=True)
+                job_description = job_description[:4000]
+            except Exception as e:
+                raise HTTPException(status_code=400, detail=f"Failed to scrape URL: {str(e)}")
 
     if not job_description:
         raise HTTPException(status_code=400, detail="Job description or URL is required")
