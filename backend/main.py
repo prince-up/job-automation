@@ -22,6 +22,9 @@ app.add_middleware(
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
+# Daily.co API key
+DAILY_API_KEY = os.getenv("DAILY_API_KEY", "")
+
 class JobRequest(BaseModel):
     url: str = None
     job_text: str = None
@@ -221,6 +224,48 @@ async def search_jobs(request: dict):
         return {"jobs": jobs}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/interview/create-room")
+async def create_video_room():
+    """Create a Daily.co video room for real-time interviews"""
+    try:
+        if not DAILY_API_KEY or DAILY_API_KEY == "demo_api_key_replace_with_real_key":
+            return {
+                "error": "Daily.co API key not configured. Please set DAILY_API_KEY in your .env file. Get your API key from https://dashboard.daily.co/developers",
+                "setup_instructions": "1. Sign up at https://www.daily.co 2. Go to Developers > API keys 3. Copy your API key 4. Add DAILY_API_KEY=your_key_here to your .env file"
+            }
+        
+        # Create a new room
+        response = requests.post(
+            "https://api.daily.co/v1/rooms",
+            headers={
+                "Authorization": f"Bearer {DAILY_API_KEY}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "privacy": "public",
+                "properties": {
+                    "max_participants": 2,
+                    "enable_chat": True,
+                    "enable_screenshare": True,
+                    "start_video_off": False,
+                    "start_audio_off": False
+                }
+            }
+        )
+        
+        if response.status_code == 200:
+            room_data = response.json()
+            return {
+                "room_url": room_data["url"],
+                "room_name": room_data["name"],
+                "success": True
+            }
+        else:
+            return {"error": f"Failed to create room: {response.text}"}
+            
+    except Exception as e:
+        return {"error": f"Failed to create video room: {str(e)}"}
 
 if __name__ == "__main__":
     import uvicorn

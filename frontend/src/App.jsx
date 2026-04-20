@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import Daily from '@daily-co/daily-js';
 import { 
   Upload, Link as LinkIcon, FileText, CheckCircle, Download, 
   Loader2, Sparkles, LayoutDashboard, History, Settings, 
   Briefcase, User, Search, Bell, ChevronRight, Zap,
   AlertCircle, ShieldCheck, Globe, Cpu, MousePointer2, 
   ArrowRight, Star, Target, Rocket, Layers, BarChart3,
-  ExternalLink, Code, Send, Users,
+  ExternalLink, Code, Send, Users, Video,
   Check, X
 } from 'lucide-react';
 
@@ -16,7 +17,7 @@ const Twitter = Send;
 const LinkedinIcon = Users;
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 
-const API_BASE = 'http://localhost:8000';
+const API_BASE = 'http://localhost:8001';
 
 function App() {
   const [activeTab, setActiveTab] = useState('landing');
@@ -39,6 +40,11 @@ function App() {
     openaiKey: localStorage.getItem('openai_key') || '',
     apifyToken: localStorage.getItem('apify_token') || ''
   });
+
+  // Video interview state
+  const [videoRoom, setVideoRoom] = useState(null);
+  const [isVideoInterviewActive, setIsVideoInterviewActive] = useState(false);
+  const videoRef = useRef(null);
 
   useEffect(() => {
     localStorage.setItem('openai_key', config.openaiKey);
@@ -107,6 +113,49 @@ function App() {
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const startVideoInterview = async () => {
+    try {
+      const response = await axios.post(`${API_BASE}/interview/create-room`);
+      
+      if (response.data.success) {
+        setVideoRoom(response.data);
+        setIsVideoInterviewActive(true);
+        
+        // Initialize Daily.co call
+        const callFrame = Daily.createFrame(videoRef.current, {
+          iframeStyle: {
+            width: '100%',
+            height: '400px',
+            border: '0',
+            borderRadius: '12px'
+          }
+        });
+        
+        await callFrame.join({ url: response.data.room_url });
+        
+        // Store call frame for cleanup
+        setVideoRoom(prev => ({ ...prev, callFrame }));
+      } else {
+        if (response.data.setup_instructions) {
+          setError(`Video Interview Setup Required: ${response.data.error}\n\n${response.data.setup_instructions}`);
+        } else {
+          setError(response.data.error || 'Failed to create video room');
+        }
+      }
+    } catch (err) {
+      console.error('Error starting video interview:', err);
+      setError('Failed to start video interview. Please check your Daily.co API key configuration.');
+    }
+  };
+
+  const endVideoInterview = async () => {
+    if (videoRoom?.callFrame) {
+      await videoRoom.callFrame.leave();
+    }
+    setVideoRoom(null);
+    setIsVideoInterviewActive(false);
   };
 
   if (activeTab === 'landing') {
@@ -460,6 +509,38 @@ function App() {
                           <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">AI Tokens</p>
                           <p className="text-lg font-bold">2.4k</p>
                         </div>
+                      </div>
+
+                      {/* Video Interview Section */}
+                      <div className="mt-8 pt-8 border-t border-white/10">
+                        <h4 className="text-sm font-black text-white mb-4 flex items-center gap-2">
+                          <Video size={16} className="text-primary" /> Real-Time Interview
+                        </h4>
+                        {isVideoInterviewActive && videoRoom ? (
+                          <div className="space-y-4">
+                            <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4">
+                              <p className="text-green-400 text-sm mb-2">Video room created successfully!</p>
+                              <p className="text-xs text-slate-400 mb-3">Share this link with your interviewer:</p>
+                              <div className="bg-white/5 rounded-lg p-2 break-all">
+                                <code className="text-white text-xs">{videoRoom.room_url}</code>
+                              </div>
+                            </div>
+                            <div ref={videoRef} className="w-full bg-black/20 rounded-xl overflow-hidden" style={{height: '300px'}}></div>
+                            <button
+                              onClick={endVideoInterview}
+                              className="w-full py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-all text-sm"
+                            >
+                              End Interview
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={startVideoInterview}
+                            className="w-full py-3 bg-primary/20 text-primary rounded-xl hover:bg-primary/30 transition-all text-sm font-bold"
+                          >
+                            Start Video Interview
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
