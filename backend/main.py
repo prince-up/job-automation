@@ -193,28 +193,30 @@ async def search_jobs(request: dict):
         
     try:
         client = ApifyClient(apify_token)
-        # Using a specialized scraper for better structured data
-        run_input = {
-            "queries": query,
-            "maxPagesPerQuery": 1
-        }
-        # For simplicity and speed in this demo, we'll use rag-web-browser with search keywords
-        # But formatted for job results
+        # Using RAG Web Browser to search across multiple platforms simultaneously
+        search_prompt = f"Find top 5 recent job listings for '{query}' on LinkedIn, Indeed, and Internshala. Return URLs and short descriptions."
+        
         run = client.actor("apify/rag-web-browser").call(run_input={
-            "query": f"site:linkedin.com/jobs {query}",
-            "maxResults": 5
+            "query": f"{query} jobs on linkedin.com, indeed.com, internshala.com",
+            "maxResults": 10
         })
         
         results = list(client.dataset(run["defaultDatasetId"]).iterate_items())
-        # Transform results to a standard job format
         jobs = []
         for res in results:
+            url = res.get("url", "")
+            # Filter for relevant domains
+            platform = "Web"
+            if "linkedin.com" in url: platform = "LinkedIn"
+            elif "indeed.com" in url: platform = "Indeed"
+            elif "internshala.com" in url: platform = "Internshala"
+            
             jobs.append({
-                "id": res.get("url"),
-                "title": res.get("metadata", {}).get("title", "Job Opportunity"),
-                "company": "LinkedIn",
-                "url": res.get("url"),
-                "snippet": res.get("markdown", "")[:200] + "..."
+                "id": url,
+                "title": res.get("metadata", {}).get("title", f"{query} Position"),
+                "company": platform,
+                "url": url,
+                "snippet": res.get("markdown", "")[:150] + "..."
             })
         return {"jobs": jobs}
     except Exception as e:
